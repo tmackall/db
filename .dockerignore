@@ -1,0 +1,5 @@
+.git
+.*swp
+Dockerfile
+run.sh
+build.sh

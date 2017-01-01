@@ -1,0 +1,30 @@
+{
+  "name": "db",
+  "version": "1.0.0",
+  "description": "Database web service",
+  "main": "db_svr.js",
+  "dependencies" : {
+    "archiver": "latest",
+    "async": "latest",
+    "clone": "latest",
+    "mongodb": "latest",  
+    "nodemailer": "latest",
+    "recursive-readdir": "latest",
+    "winston": "latest"
+  },
+  "config" : { 
+    "port_db" : "3002",
+    "ip_db" : "192.168.0.21",
+    "ll": "info"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node db_svr.js"
+  },
+  "keywords": [
+    "db",
+    "mackall"
+  ],
+  "author": "Tom Mackall",
+  "license": "ISC"
+}
