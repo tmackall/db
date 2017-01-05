@@ -1,18 +1,18 @@
 FROM resin/rpi-raspbian:jessie-20160831  
 FROM hypriot/rpi-node:slim
 
-ARG DIR_DB=/srv/db
+ARG DIR=/srv/db
 
-WORKDIR ${DIR_DB}
+WORKDIR ${DIR}
 
 # Install app dependencies
-COPY package.json ${DIR_DB}
+COPY package.json ${DIR}
 RUN npm install .
 
-COPY db_svr.js ${DIR_DB}
+COPY db_svr.js ${DIR}
 # Bundle app source
-COPY . ${DIR_DB}
+COPY . ${DIR}
 
 
-ENV LL=debug
+ENV LL=info
 CMD [ "npm", "start"]

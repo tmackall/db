@@ -1,5 +1,6 @@
 .git
 .*swp
-Dockerfile
 run.sh
 build.sh
+.gitignore
+local_env.sh

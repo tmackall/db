@@ -10,8 +10,6 @@ const recursive = require('recursive-readdir');
 const winston = require('winston');
 const ObjectId = require('mongodb').ObjectId;
 
-var exports = module.exports = {};
-
 const LL = process.env.LL || process.env.npm_package_config_ll || 'warning';
 const PORT_DB = process.env.PORT_DB || process.env.npm_package_config_port_db || '3002';
 const IP_DB = process.env.IP_DB || process.env.npm_package_config_ip_db || '192.168.0.21';
@@ -112,12 +110,12 @@ function updateMovementDoc(lMovement, value, callback) {
 var server = http.createServer(requestProcess);
 
 function requestProcess(request, response) {
-  var headers = request.headers;
-  var method = request.method;
-  var url = request.url;
-  var body = [];
-  var valRet = {};
-  var data = null;
+  let headers = request.headers;
+  let method = request.method;
+  let url = request.url;
+  let body = [];
+  let valRet = {};
+  let data = null;
 
   response.statusCode = 200;
   request.on('error', function(err) {
@@ -131,8 +129,8 @@ function requestProcess(request, response) {
       logger.error(err);
       valRet.text = err;
     });
-    var tmpReq = 'Message received: ' + url;
 
+    let tmpReq = 'Message received: ' + url;
     
     // response - put it together and it needs to be synced
     async.series([
@@ -199,7 +197,7 @@ function requestProcess(request, response) {
         response.setHeader('Content-Type', 'application/json');
         valRet.status = response.statusCode;
     
-        var responseBody = {
+        let responseBody = {
           method: method,
           data: valRet,
           url: url,
