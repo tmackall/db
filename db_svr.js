@@ -2,13 +2,12 @@
 const path = require('path');
 const fs = require('fs');
 const async = require('async');
-const clone = require('clone');
-const archiver =  require('archiver');
-const nodemailer = require('nodemailer');
 const http = require('http');
 const recursive = require('recursive-readdir');
 const winston = require('winston');
 const ObjectId = require('mongodb').ObjectId;
+const boom = require('boom');
+const hapi = require('hapi');
 
 const LL = process.env.LL || process.env.npm_package_config_ll || 'warning';
 const PORT_DB = process.env.PORT_DB || process.env.npm_package_config_port_db || '3002';
@@ -35,8 +34,10 @@ var MongoClient = require('mongodb').MongoClient,
 
       
 // ----------------------------------------
+//
 // getAllUnprocessed() - get all the unprocessed
 // db movement entries.
+//
 // ----------------------------------------
 function getAllUnprocessed(fUpdate, callback) {
   if (typeof callback === 'undefined') {
@@ -54,20 +55,23 @@ function getAllUnprocessed(fUpdate, callback) {
   });
 }
 
-// ----------------------------------------
+// ---------------------------------------------------------
 //
-// db - insert movement document
+// insertMovementDoc() - insert movement document
 //
-// ----------------------------------------
+// ---------------------------------------------------------
 function insertMovementDoc(callback) {
   // Insert a single document
   MongoClient.connect(DB, function(err, db) {
-    db.collection(DB_COLLECTION).insertOne({
+    let item = {
       movement_date: new Date(),
-      processed: false},
+      processed: false
+    };
+    db.collection(DB_COLLECTION).insertOne(
+      item,
       function(err, res){
         db.close();
-        callback(err);
+        callback(err, item._id);
     });
   });
 }
@@ -77,11 +81,7 @@ function insertMovementDoc(callback) {
 // db - update movement document
 //
 // ----------------------------------------
-function updateMovementDoc(lMovement, value, callback) {
-  if (typeof callback === 'undefined') {
-    callback = value;
-    value = true;
-  }
+function updateMovementDoc(lMovement, callback) {
 
   var oid = null;
   MongoClient.connect(DB, function(err, db) {
@@ -90,7 +90,7 @@ function updateMovementDoc(lMovement, value, callback) {
       oid = new ObjectId(rec._id);
       db.collection(DB_COLLECTION).update({
         _id: oid},
-        { $set:{processed: value}},
+        { $set:{processed: rec.processed}},
         function(err, res){
           logger.debug(res);
           callb(err);
@@ -107,6 +107,7 @@ function updateMovementDoc(lMovement, value, callback) {
 // web app - create the db service
 //
 // ----------------------------
+/*
 var server = http.createServer(requestProcess);
 
 function requestProcess(request, response) {
@@ -210,7 +211,75 @@ function requestProcess(request, response) {
   });
 }
 
+server.listen(PORT_DB);
+*/
 // ------------------------------------
 //  main loop - service
 // ------------------------------------
-server.listen(PORT_DB);
+let server = new hapi.Server();
+server.connection({ 
+  port: PORT_DB
+});
+
+// endpoint and method definitions
+server.route([
+  {
+    method: ['POST'],
+    path:'/db/movement', 
+    handler: function (request, reply) {
+      logger.debug('Storing movement info');
+      insertMovementDoc(function(err, res) {
+        if (err) {
+          let msg = 'mandatory param state is undefined';
+          logger.error(msg);
+          return reply(boom.badRequest(msg));
+        } else {
+          console.log(res);
+          return reply({id: res}).code(201);
+        }
+      });
+    }
+  },
+  {
+    method: ['GET'],
+    path:'/db/unprocessed', 
+    handler: function (request, reply) {
+      logger.debug('Get the unprocessed DB entries');
+      getAllUnprocessed(function(err, res){
+        if (err) {
+          let msg = err + ' returned';
+          logger.error(msg);
+          return reply(boom.badImplementation(msg));
+        } else {
+          return reply(res);
+        }
+      });
+    }
+  },
+  {
+    method: ['PUT'],
+    path:'/db/processed', 
+    handler: function (request, reply) {
+      logger.debug('Update the DB entries');
+      let data = request.payload;
+
+      updateMovementDoc(data, function(err) {
+        logger.debug('update status: ' + err);
+        if (err) {
+          let msg = err + ' returned';
+          logger.error(msg);
+          return reply(boom.badImplementation(msg));
+        } else {
+          return reply();
+        }
+      });
+    }
+  },
+]);
+
+
+// Start the server
+server.start((err) => {
+  if (err) throw err;
+  logger.info('Server running at:', server.info.uri);
+});

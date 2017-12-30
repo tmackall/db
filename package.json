@@ -4,9 +4,7 @@
   "description": "Database web service",
   "main": "db_svr.js",
   "dependencies" : {
-    "archiver": "latest",
     "async": "latest",
-    "clone": "latest",
     "mongodb": "latest",  
     "nodemailer": "latest",
     "recursive-readdir": "latest",
